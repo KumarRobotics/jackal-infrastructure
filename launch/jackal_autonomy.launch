@@ -1,0 +1,59 @@
+<launch> 
+    <arg name="robot_name" default=""/>
+    <arg name="ground_seg" default="true"/>
+    <arg name="lethality_threshold" default="30"/>
+    <arg name="inflation_radius" default="0.1"/>
+    <arg name="obstacles_range" default="15"/>
+    <arg name="raytrace_range" default="10"/>
+    <arg name="costmap_size" default="20"/>
+    <arg name="min_obstacle_height" default="-100"/>
+    <arg name="max_obstacle_height" default="500"/>
+    <arg name="footprint_padding" default="0.5"/>
+
+    <arg name="use_mocha" default="true"/>
+
+
+
+        <include file="$(find ublox_gps)/launch/ublox_device.launch">
+            <arg name="param_file_name" value="zed_f9p"/>
+        </include>
+
+        <include file="$(find jackal_launch)/launch/jackal_hw.launch"/>
+        <include file="$(find zed_wrapper)/launch/zed2i.launch"/>
+        <include file="$(find ouster_ros)/launch/driver.launch"/>
+        <include file="$(find faster_lio)/launch/mapping_ouster64.launch"/>
+	<include file="$(find imu_vn_100)/launch/vn_100_cont.launch"/>
+	<include file="$(find open_vocab_vision_ros)/launch/vision.launch"/> 
+
+
+   <group if="$(arg use_mocha)">
+	<include file="$(find mocha_launch)/launch/jackal.launch">
+		<arg name="robot_name" value="$(arg robot_name)"/>
+	</include>
+   </group>
+
+ 
+
+    <group if="$(arg ground_seg)">
+        <include file="$(find jackal_launch)/launch/jackal_navigation_real_robot.launch">
+            <arg name="topic" value="/groundgrid/obstacle_cloud"/>
+            <arg name="inflation_radius" value="$(arg inflation_radius)"/>
+            <arg name="obstacles_range" value="$(arg obstacles_range)"/>
+            <arg name="raytrace_range" value="$(arg raytrace_range)"/>
+            <arg name="costmap_size" value="$(arg costmap_size)"/>
+            <arg name="min_obstacle_height" value="$(arg min_obstacle_height)"/>
+            <arg name="max_obstacle_height" value="$(arg max_obstacle_height)"/>
+	    <arg name="footprint_padding" value="$(arg footprint_padding)"/>
+        </include>
+
+        <include file="$(find groundgrid)/launch/GroundGrid.launch">
+            <arg name="point_cloud_topic" value="/ouster/points"/>
+            <arg name="odom_topic" value="/Odometry"/>
+        </include>
+    </group>
+
+    <group unless="$(arg ground_seg)">
+        <include file="$(find jackal_launch)/launch/jackal_navigation_real_robot.launch"/>
+    </group>
+
+</launch>
